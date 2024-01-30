@@ -420,7 +420,29 @@ void editContact(vector <Person> &friends)
 
 }
 
-void oldMain()
+void updateUserFile(vector <User> users);
+
+void changePassword(int currentUserId, vector <User> &users)
+{
+    string newPassword = "";
+    cout << "Podaj nowe haslo: ";
+    newPassword = readLine();
+
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        if (users[i].userId == currentUserId)
+        {
+            users[i].password = newPassword;
+            break;
+        }
+    }
+
+    updateUserFile(users);
+    cout << "Haslo zostalo zmienione" << endl;
+    system("pause");
+}
+
+void oldMain(int currentUserId, vector <User> &users)
 {
     vector <Person> friends;
     readDataFromFile(friends);
@@ -452,9 +474,11 @@ void oldMain()
             editContact(friends);
             break;
         case '7':
-            //zmien haslo
+            changePassword(currentUserId, users);
             break;
         case '9':
+            cout << "Nastapi wylogowanie uzytkownika o Id: " << currentUserId << endl;
+            system("pause");
             break;
         default:
             cout << "Wprowadziles znak nieobslugiwany przez menu programu. Sproboj ponownie." << endl;
@@ -576,7 +600,7 @@ void registerUser(vector <User> &users)
 {
     User newUser;
 
-    if (users.size()==0)
+    if (users.size() == 0)
     {
         newUser.userId = 1;
     }
@@ -598,11 +622,43 @@ void registerUser(vector <User> &users)
     system("pause");
 }
 
+int logIn(vector <User> users)
+{
+    string name, password;
+    int attempt = 3;
+    cout << "Podaj nazwe uzytkownika: ";
+    name = readLine();
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        if(users[i].userName == name)
+        {
+            while(attempt > 0)
+            {
+                cout << "Podaj haslo uzytkownika: ";
+                password = readLine();
+                if(users[i].password == password)
+                {
+                    return users[i].userId;
+                }
+                else
+                {
+                    attempt--;
+                    cout << "Niepoprawne haslo. " << "Pozostalo " << attempt << " prob." << endl;
+                }
+            }
+            return 0;
+        }
+    }
+    cout << "Nieodnaleziono uzytkownika o podanej nazwie" << endl;
+    return 0;
+}
+
 int main()
 {
     vector <User> users;
     readUsersDataFromFile(users);
-    char input = 0;
+    char input = '0';
+    int currentUserId = 0;
     while (input != '3')
     {
         displayLoginMenu();
@@ -611,9 +667,16 @@ int main()
         switch (input)
         {
         case '1':
-            //obsluga logowania, gdy poprawne to:
-            oldMain();
-            //wylogowanie
+            currentUserId = logIn(users);
+            if(currentUserId)
+            {
+                oldMain(currentUserId, users);
+            }
+            else
+            {
+                cout << "Nieudane logowanie." << endl;
+                system("pause");
+            }
             break;
         case '2':
             registerUser(users);
