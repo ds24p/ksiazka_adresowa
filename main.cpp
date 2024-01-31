@@ -4,17 +4,26 @@
 #include <fstream>
 #include <string>
 #include <bits/stdc++.h>
+#include <cstdio>
 
 using namespace std;
 
 struct Person
 {
     int id;
+    int userIdPerson;
     string name;
     string surname;
     string telephoneNumber;
     string email;
     string adress;
+};
+
+struct User
+{
+    int userId;
+    string userName;
+    string password;
 };
 
 void displayMenu()
@@ -28,7 +37,8 @@ void displayMenu()
     cout << "4. Wyswietl wszystkich adresatow" << endl;
     cout << "5. Usun adresata" << endl;
     cout << "6. Edytuj adresata" << endl;
-    cout << "9. Zakoncz program" << endl;
+    cout << "7. Zmien haslo" << endl;
+    cout << "9. Wyloguj sie" << endl;
 }
 
 string readLine()
@@ -84,6 +94,7 @@ Person splitLineIntoStructFields(string line)
     char separator = '|';
     int i = 0;
     string helpWithId = "";
+    string helpWithUserId = "";
 
     int fieldNumber = 0;
     while (line[i] != '\0')
@@ -96,18 +107,21 @@ Person splitLineIntoStructFields(string line)
                 helpWithId += line[i];
                 break;
             case 1:
-                newPerson.name += line[i];
+                helpWithUserId += line[i];
                 break;
             case 2:
-                newPerson.surname += line[i];
+                newPerson.name += line[i];
                 break;
             case 3:
-                newPerson.telephoneNumber += line[i];
+                newPerson.surname += line[i];
                 break;
             case 4:
-                newPerson.email += line[i];
+                newPerson.telephoneNumber += line[i];
                 break;
             case 5:
+                newPerson.email += line[i];
+                break;
+            case 6:
                 newPerson.adress += line[i];
                 break;
             }
@@ -119,16 +133,17 @@ Person splitLineIntoStructFields(string line)
         i++;
     }
     newPerson.id = stoi(helpWithId);
+    newPerson.userIdPerson = stoi(helpWithUserId);
     return newPerson;
 }
 
-void readDataFromFile(vector <Person> &friends)
+void readDataFromFile(vector <Person> &friends, int currentUserId)
 {
     Person newPerson;
     fstream file;
     string line = "";
     int lineNumber = 1;
-    file.open("friends_nowy_format.txt", ios::in | ios::app);
+    file.open("persons.txt", ios::in | ios::app);
 
     if (!file.good())
     {
@@ -139,7 +154,10 @@ void readDataFromFile(vector <Person> &friends)
         while (getline(file, line))
         {
             newPerson = splitLineIntoStructFields(line);
-            friends.push_back(newPerson);
+            if (newPerson.userIdPerson == currentUserId)
+            {
+                friends.push_back(newPerson);
+            }
             lineNumber++;
         }
     }
@@ -148,7 +166,7 @@ void readDataFromFile(vector <Person> &friends)
 void writeIntoFile(Person toWrite)
 {
     fstream file;
-    file.open("friends_nowy_format.txt", ios::app);
+    file.open("persons.txt", ios::app);
 
     if (!file.good())
     {
@@ -157,6 +175,7 @@ void writeIntoFile(Person toWrite)
     else
     {
         file << toWrite.id << "|";
+        file << toWrite.userIdPerson << "|";
         file << toWrite.name << "|";
         file << toWrite.surname << "|";
         file << toWrite.telephoneNumber << "|";
@@ -168,21 +187,55 @@ void writeIntoFile(Person toWrite)
 }
 
 
-void updateFile(vector <Person> friends)
+void updateFile(Person updatedFriend, char mode)
 {
     fstream file;
-    file.open("friends_nowy_format.txt", ios::out);
+    file.open("persons.txt", ios::in);
+    fstream newFile;
+    newFile.open("persons_new.txt", ios::app);
 
-    for (size_t i = 0; i < friends.size(); i++)
+    int i = 0;
+    string line = "";
+    while (getline(file, line))
     {
-        file << friends[i].id << "|";
-        file << friends[i].name << "|";
-        file << friends[i].surname << "|";
-        file << friends[i].telephoneNumber << "|";
-        file << friends[i].email << "|";
-        file << friends[i].adress << "|" << endl;
+        i = 0;
+        string helpWithId = "";
+        int contactId = 0;
+        while (line[i] != '|')
+        {
+            helpWithId += line[i];
+            i++;
+        }
+        contactId = stoi(helpWithId);
+
+        if(contactId == updatedFriend.id && mode == 'e')
+        {
+            newFile << updatedFriend.id << "|";
+            newFile << updatedFriend.userIdPerson << "|";
+            newFile << updatedFriend.name << "|";
+            newFile << updatedFriend.surname << "|";
+            newFile << updatedFriend.telephoneNumber << "|";
+            newFile << updatedFriend.email << "|";
+            newFile << updatedFriend.adress << "|" << endl;
+        }
+        else if(contactId == updatedFriend.id && mode == 'd')
+        {
+            ;
+        }
+        else
+        {
+            newFile << line << endl;
+        }
     }
     file.close();
+    newFile.close();
+
+    remove("persons.txt");
+
+    if (rename("persons_new.txt", "persons.txt") != 0)
+		perror("Error renaming file");
+	else
+		cout << "File renamed successfully";
 }
 
 void printPerson(Person person)
@@ -195,19 +248,36 @@ void printPerson(Person person)
     cout << "Adres: " << person.adress << endl << endl;
 }
 
+int findId()
+{
+    fstream file;
+    file.open("persons.txt", ios::in);
 
-void addRecipient(vector <Person> &friends)
+    int i = 0;
+    int contactId = 0;
+    string line = "";
+    while (getline(file, line))
+    {
+        i = 0;
+        string helpWithId = "";
+        contactId = 0;
+        while (line[i] != '|')
+        {
+            helpWithId += line[i];
+            i++;
+        }
+        contactId = stoi(helpWithId);
+    }
+    return contactId + 1;
+}
+
+void addRecipient(vector <Person> &friends, int currentUserId)
 {
     Person newPerson;
 
-    if (friends.size()==0)
-    {
-        newPerson.id = 1;
-    }
-    else
-    {
-        newPerson.id = friends[friends.size()-1].id + 1;
-    }
+    newPerson.id = findId();
+
+    newPerson.userIdPerson = currentUserId;
     cout << "Podaj imie dodawanej osoby: ";
     newPerson.name = readLine();
     cout << "Podaj nazwisko dodawanej osoby: ";
@@ -307,9 +377,8 @@ void deleteContact(vector <Person> &friends)
             if(choice == 't')
             {
                 cout << "Usuwam kontakt o id: " << deletedId << endl;
+                updateFile(friends[i], 'd');
                 friends.erase(friends.begin() + i);
-
-                updateFile(friends);
             }
 
         }
@@ -392,7 +461,7 @@ void editContact(vector <Person> &friends)
             editContactFields(friends[i]);
             cout << "Dane kontaktu po edycji:" << endl;
             printPerson(friends[i]);
-            updateFile(friends);
+            updateFile(friends[i], 'e');
         }
     }
     if (doesNotExist)
@@ -410,10 +479,32 @@ void editContact(vector <Person> &friends)
 
 }
 
-int main()
+void updateUserFile(vector <User> users);
+
+void changePassword(int currentUserId, vector <User> &users)
+{
+    string newPassword = "";
+    cout << "Podaj nowe haslo: ";
+    newPassword = readLine();
+
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        if (users[i].userId == currentUserId)
+        {
+            users[i].password = newPassword;
+            break;
+        }
+    }
+
+    updateUserFile(users);
+    cout << "Haslo zostalo zmienione" << endl;
+    system("pause");
+}
+
+void oldMain(int currentUserId, vector <User> &users)
 {
     vector <Person> friends;
-    readDataFromFile(friends);
+    readDataFromFile(friends, currentUserId);
     char input = 0;
 
     while (input != '9')
@@ -424,7 +515,7 @@ int main()
         switch (input)
         {
         case '1':
-            addRecipient(friends);
+            addRecipient(friends, currentUserId);
             break;
         case '2':
             searchForName(friends);
@@ -441,7 +532,215 @@ int main()
         case '6':
             editContact(friends);
             break;
+        case '7':
+            changePassword(currentUserId, users);
+            break;
         case '9':
+            cout << "Nastapi wylogowanie uzytkownika o Id: " << currentUserId << endl;
+            system("pause");
+            break;
+        default:
+            cout << "Wprowadziles znak nieobslugiwany przez menu programu. Sproboj ponownie." << endl;
+            system("pause");
+            break;
+        }
+    }
+}
+
+void displayLoginMenu()
+{
+    system("cls");
+    cout << "Wybierz odpowiednia opcje:" << endl;
+    cout << "1. Logowanie" << endl;
+    cout << "2. Rejestracja" << endl;
+    cout << "3. Zamknij program" << endl;
+}
+
+User splitLineIntoStructFieldsUser(string line)
+{
+    User newUser;
+    char separator = '|';
+    int i = 0;
+    string helpWithId = "";
+
+    int fieldNumber = 0;
+    while (line[i] != '\0')
+    {
+        if (line[i] != separator)
+        {
+            switch(fieldNumber)
+            {
+            case 0:
+                helpWithId += line[i];
+                break;
+            case 1:
+                newUser.userName += line[i];
+                break;
+            case 2:
+                newUser.password += line[i];
+                break;
+            }
+        }
+        else
+        {
+            fieldNumber++;
+        }
+        i++;
+    }
+    newUser.userId = stoi(helpWithId);
+    return newUser;
+}
+
+void readUsersDataFromFile(vector <User> &users)
+{
+    User newUser;
+    fstream file;
+    string line = "";
+    int lineNumber = 1;
+    file.open("uzytkownicy.txt", ios::in | ios::app);
+
+    if (!file.good())
+    {
+        cout << "Blad otwarcia pliku" << endl;
+    }
+    else
+    {
+        while (getline(file, line))
+        {
+            newUser = splitLineIntoStructFieldsUser(line);
+            users.push_back(newUser);
+            lineNumber++;
+        }
+    }
+}
+
+void writeUserIntoFile(User toWrite)
+{
+    fstream file;
+    file.open("uzytkownicy.txt", ios::app);
+
+    if (!file.good())
+    {
+        cout << "Blad otwarcia pliku wyjsciowego" << endl;
+    }
+    else
+    {
+        file << toWrite.userId << "|";
+        file << toWrite.userName << "|";
+        file << toWrite.password << "|" << endl;
+    }
+
+    file.close();
+}
+
+
+void updateUserFile(vector <User> users)
+{
+    fstream file;
+    file.open("uzytkownicy.txt", ios::out);
+
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        file << users[i].userId << "|";
+        file << users[i].userName<< "|";
+        file << users[i].password << "|" << endl;
+    }
+    file.close();
+}
+
+void printUser(User user)
+{
+    cout << "Numer id: " << user.userId << endl;
+    cout << "Nazwa uzytkownika: " << user.userName << endl;
+    cout << "Haslo uzytkownika: " << user.password << endl << endl;
+}
+
+void registerUser(vector <User> &users)
+{
+    User newUser;
+
+    if (users.size() == 0)
+    {
+        newUser.userId = 1;
+    }
+    else
+    {
+        newUser.userId = users[users.size()-1].userId + 1;
+    }
+    cout << "Podaj nazwe uzytkownika: ";
+    newUser.userName = readLine();
+    cout << "Podaj haslo uzytkownika: ";
+    newUser.password = readLine();
+
+    users.push_back(newUser);
+    writeUserIntoFile(newUser);
+
+    cout << "Zarejestrowano nastepujacego uzytkownika: " << endl << endl;
+    printUser(newUser);
+
+    system("pause");
+}
+
+int logIn(vector <User> users)
+{
+    string name, password;
+    int attempt = 3;
+    cout << "Podaj nazwe uzytkownika: ";
+    name = readLine();
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        if(users[i].userName == name)
+        {
+            while(attempt > 0)
+            {
+                cout << "Podaj haslo uzytkownika: ";
+                password = readLine();
+                if(users[i].password == password)
+                {
+                    return users[i].userId;
+                }
+                else
+                {
+                    attempt--;
+                    cout << "Niepoprawne haslo. " << "Pozostalo " << attempt << " prob." << endl;
+                }
+            }
+            return 0;
+        }
+    }
+    cout << "Nieodnaleziono uzytkownika o podanej nazwie" << endl;
+    return 0;
+}
+
+int main()
+{
+    vector <User> users;
+    readUsersDataFromFile(users);
+    char input = '0';
+    int currentUserId = 0;
+    while (input != '3')
+    {
+        displayLoginMenu();
+        input = getChar();
+
+        switch (input)
+        {
+        case '1':
+            currentUserId = logIn(users);
+            if(currentUserId)
+            {
+                oldMain(currentUserId, users);
+            }
+            else
+            {
+                cout << "Nieudane logowanie." << endl;
+                system("pause");
+            }
+            break;
+        case '2':
+            registerUser(users);
+            break;
+        case '3':
             break;
         default:
             cout << "Wprowadziles znak nieobslugiwany przez menu programu. Sproboj ponownie." << endl;
