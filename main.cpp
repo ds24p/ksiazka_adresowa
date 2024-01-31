@@ -190,6 +190,7 @@ void writeIntoFile(Person toWrite)
 void updateFile(Person updatedFriend, char mode)
 {
     fstream file;
+
     file.open("persons.txt", ios::in);
     fstream newFile;
     newFile.open("persons_new.txt", ios::app);
@@ -226,6 +227,7 @@ void updateFile(Person updatedFriend, char mode)
         {
             newFile << line << endl;
         }
+
     }
     file.close();
     newFile.close();
