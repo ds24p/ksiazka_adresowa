@@ -41,6 +41,16 @@ void displayMenu()
     cout << "9. Wyloguj sie" << endl;
 }
 
+void displayLoginMenu()
+{
+    system("cls");
+    cout << "--------------------LOGIN-MENU-------------------" << endl;
+    cout << "Wybierz odpowiednia opcje:" << endl;
+    cout << "1. Logowanie" << endl;
+    cout << "2. Rejestracja" << endl;
+    cout << "3. Zamknij program" << endl;
+}
+
 string readLine()
 {
     string input;
@@ -88,6 +98,7 @@ char getChar()
     return inputChar;
 }
 
+//-mainly functions connected with persons below
 Person splitLineIntoStructFields(string line)
 {
     Person newPerson;
@@ -137,7 +148,7 @@ Person splitLineIntoStructFields(string line)
     return newPerson;
 }
 
-void readDataFromFile(vector <Person> &friends, int currentUserId)
+void readPersonDataFromFile(vector <Person> &friends, int currentUserId)
 {
     Person newPerson;
     fstream file;
@@ -185,7 +196,6 @@ void writeIntoFile(Person toWrite)
 
     file.close();
 }
-
 
 void updateFile(Person updatedFriend, char mode)
 {
@@ -308,7 +318,7 @@ void showAllFriends(vector <Person> &friends)
     }
     if (friends.size() == 0)
     {
-        cout << "Lista kontaktow jest pusta..." << endl << endl;
+        cout << "Lista kontaktow zalogowanego uzytkownika jest pusta..." << endl << endl;
     }
     system("pause");
 }
@@ -478,10 +488,23 @@ void editContact(vector <Person> &friends)
         }
     }
     system("pause");
-
 }
 
-void updateUserFile(vector <User> users);
+//--mainly user's functions below:
+
+void updateUserFile(vector <User> users)
+{
+    fstream file;
+    file.open("uzytkownicy.txt", ios::out);
+
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        file << users[i].userId << "|";
+        file << users[i].userName<< "|";
+        file << users[i].password << "|" << endl;
+    }
+    file.close();
+}
 
 void changePassword(int currentUserId, vector <User> &users)
 {
@@ -501,61 +524,6 @@ void changePassword(int currentUserId, vector <User> &users)
     updateUserFile(users);
     cout << "Haslo zostalo zmienione" << endl;
     system("pause");
-}
-
-void oldMain(int currentUserId, vector <User> &users)
-{
-    vector <Person> friends;
-    readDataFromFile(friends, currentUserId);
-    char input = 0;
-
-    while (input != '9')
-    {
-        displayMenu();
-        input = getChar();
-
-        switch (input)
-        {
-        case '1':
-            addRecipient(friends, currentUserId);
-            break;
-        case '2':
-            searchForName(friends);
-            break;
-        case '3':
-            searchForSurname(friends);
-            break;
-        case '4':
-            showAllFriends(friends);
-            break;
-        case '5':
-            deleteContact(friends);
-            break;
-        case '6':
-            editContact(friends);
-            break;
-        case '7':
-            changePassword(currentUserId, users);
-            break;
-        case '9':
-            cout << "Nastapi wylogowanie uzytkownika o Id: " << currentUserId << endl;
-            system("pause");
-            break;
-        default:
-            cout << "Wprowadziles znak nieobslugiwany przez menu programu. Sproboj ponownie." << endl;
-            system("pause");
-            break;
-        }
-    }
-}
-
-void displayLoginMenu()
-{
-    system("cls");
-    cout << "Wybierz odpowiednia opcje:" << endl;
-    cout << "1. Logowanie" << endl;
-    cout << "2. Rejestracja" << endl;
-    cout << "3. Zamknij program" << endl;
 }
 
 User splitLineIntoStructFieldsUser(string line)
@@ -635,21 +603,6 @@ void writeUserIntoFile(User toWrite)
     file.close();
 }
 
-
-void updateUserFile(vector <User> users)
-{
-    fstream file;
-    file.open("uzytkownicy.txt", ios::out);
-
-    for (size_t i = 0; i < users.size(); i++)
-    {
-        file << users[i].userId << "|";
-        file << users[i].userName<< "|";
-        file << users[i].password << "|" << endl;
-    }
-    file.close();
-}
-
 void printUser(User user)
 {
     cout << "Numer id: " << user.userId << endl;
@@ -714,6 +667,52 @@ int logIn(vector <User> users)
     return 0;
 }
 
+void operateAddressee(int currentUserId, vector <User> &users)
+{
+    vector <Person> friends;
+    readPersonDataFromFile(friends, currentUserId);
+    char input = 0;
+
+    while (input != '9')
+    {
+        displayMenu();
+        input = getChar();
+
+        switch (input)
+        {
+        case '1':
+            addRecipient(friends, currentUserId);
+            break;
+        case '2':
+            searchForName(friends);
+            break;
+        case '3':
+            searchForSurname(friends);
+            break;
+        case '4':
+            showAllFriends(friends);
+            break;
+        case '5':
+            deleteContact(friends);
+            break;
+        case '6':
+            editContact(friends);
+            break;
+        case '7':
+            changePassword(currentUserId, users);
+            break;
+        case '9':
+            cout << "Nastapi wylogowanie uzytkownika o Id: " << currentUserId << endl;
+            system("pause");
+            break;
+        default:
+            cout << "Wprowadziles znak nieobslugiwany przez menu programu. Sproboj ponownie." << endl;
+            system("pause");
+            break;
+        }
+    }
+}
+
 int main()
 {
     vector <User> users;
@@ -731,7 +730,7 @@ int main()
             currentUserId = logIn(users);
             if(currentUserId)
             {
-                oldMain(currentUserId, users);
+                operateAddressee(currentUserId, users);
             }
             else
             {
