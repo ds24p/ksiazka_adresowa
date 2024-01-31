@@ -93,6 +93,7 @@ Person splitLineIntoStructFields(string line)
     char separator = '|';
     int i = 0;
     string helpWithId = "";
+    string helpWithUserId = "";
 
     int fieldNumber = 0;
     while (line[i] != '\0')
@@ -105,18 +106,21 @@ Person splitLineIntoStructFields(string line)
                 helpWithId += line[i];
                 break;
             case 1:
-                newPerson.name += line[i];
+                helpWithUserId += line[i];
                 break;
             case 2:
-                newPerson.surname += line[i];
+                newPerson.name += line[i];
                 break;
             case 3:
-                newPerson.telephoneNumber += line[i];
+                newPerson.surname += line[i];
                 break;
             case 4:
-                newPerson.email += line[i];
+                newPerson.telephoneNumber += line[i];
                 break;
             case 5:
+                newPerson.email += line[i];
+                break;
+            case 6:
                 newPerson.adress += line[i];
                 break;
             }
@@ -128,6 +132,7 @@ Person splitLineIntoStructFields(string line)
         i++;
     }
     newPerson.id = stoi(helpWithId);
+    newPerson.userIdPerson = stoi(helpWithUserId);
     return newPerson;
 }
 
@@ -137,7 +142,7 @@ void readDataFromFile(vector <Person> &friends)
     fstream file;
     string line = "";
     int lineNumber = 1;
-    file.open("friends_nowy_format.txt", ios::in | ios::app);
+    file.open("persons.txt", ios::in | ios::app);
 
     if (!file.good())
     {
@@ -157,7 +162,7 @@ void readDataFromFile(vector <Person> &friends)
 void writeIntoFile(Person toWrite)
 {
     fstream file;
-    file.open("friends_nowy_format.txt", ios::app);
+    file.open("persons.txt", ios::app);
 
     if (!file.good())
     {
@@ -166,7 +171,7 @@ void writeIntoFile(Person toWrite)
     else
     {
         file << toWrite.id << "|";
-        //file << id uzytkownika... << "|";
+        file << toWrite.userIdPerson << "|";
         file << toWrite.name << "|";
         file << toWrite.surname << "|";
         file << toWrite.telephoneNumber << "|";
@@ -181,11 +186,12 @@ void writeIntoFile(Person toWrite)
 void updateFile(vector <Person> friends)
 {
     fstream file;
-    file.open("friends_nowy_format.txt", ios::out);
+    file.open("persons.txt", ios::out);
 
     for (size_t i = 0; i < friends.size(); i++)
     {
         file << friends[i].id << "|";
+        file << friends[i].userIdPerson << "|";
         file << friends[i].name << "|";
         file << friends[i].surname << "|";
         file << friends[i].telephoneNumber << "|";
@@ -205,8 +211,30 @@ void printPerson(Person person)
     cout << "Adres: " << person.adress << endl << endl;
 }
 
+int findId()
+{
+    fstream file;
+    file.open("persons.txt", ios::in);
 
-void addRecipient(vector <Person> &friends)
+    int i = 0;
+    int contactId = 0;
+    string line = "";
+    while (getline(file, line))
+    {
+        i = 0;
+        string helpWithId = "";
+        contactId = 0;
+        while (line[i] != '|')
+        {
+            helpWithId += line[i];
+            i++;
+        }
+        contactId = stoi(helpWithId);
+    }
+    return contactId + 1;
+}
+
+void addRecipient(vector <Person> &friends, int currentUserId)
 {
     Person newPerson;
 
@@ -216,8 +244,9 @@ void addRecipient(vector <Person> &friends)
     }
     else
     {
-        newPerson.id = friends[friends.size()-1].id + 1;
+        newPerson.id = findId();
     }
+    newPerson.userIdPerson = currentUserId;
     cout << "Podaj imie dodawanej osoby: ";
     newPerson.name = readLine();
     cout << "Podaj nazwisko dodawanej osoby: ";
@@ -456,7 +485,7 @@ void oldMain(int currentUserId, vector <User> &users)
         switch (input)
         {
         case '1':
-            addRecipient(friends);
+            addRecipient(friends, currentUserId);
             break;
         case '2':
             searchForName(friends);
